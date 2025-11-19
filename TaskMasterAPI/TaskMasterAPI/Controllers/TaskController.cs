@@ -69,6 +69,24 @@ public class TaskController : ControllerBase
         return Ok(task);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateTask([FromRoute] int id, [FromBody] TaskCreateDto dto)
+    {
+        var userId = GetUserId();
+        var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == id);
 
+        if (task == null)
+        {
+            return NotFound("Task not Found or access denied!");
+        }
+
+        task.Title = dto.Title;
+        task.Description = dto.Description;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(task);
+
+    }
 
 }

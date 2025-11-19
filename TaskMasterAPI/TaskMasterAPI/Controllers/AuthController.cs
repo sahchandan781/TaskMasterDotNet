@@ -48,5 +48,47 @@ namespace TaskMasterAPI.Controllers
 
         }
 
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginDtos dto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == dto.UserName);
+
+            if(user == null)
+            {
+                return Unauthorized("Invalid Credentials!");
+            }
+
+            if(!BCrypt.Net.BCrypt.Verify(dto.Password,user.PasswordHash))
+            {
+                return Unauthorized("Invalid Credentials!");
+            }
+
+            string token = GenerateJwt(user);
+
+            return Ok(new {token});
+        }
+
+        private string GenerateJwt(UserModel user)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddHours(1),
+            signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+             
     }
 }

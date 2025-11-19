@@ -89,4 +89,23 @@ public class TaskController : ControllerBase
 
     }
 
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteTask([FromRoute] int id )
+    {
+        var userId = GetUserId();
+
+        if(userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == id);
+
+         _context.TaskItems.Remove(task);
+        await _context.SaveChangesAsync();
+
+        return Ok("Task Deleted Successfully");
+    }
+
 }

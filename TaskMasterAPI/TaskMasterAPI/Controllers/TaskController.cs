@@ -46,4 +46,29 @@ public class TaskController : ControllerBase
         return Ok(task);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAllTask()
+    {
+        var userId = GetUserId();
+
+        var tasks = await _context.TaskItems.Where(t => t.UserId == userId).ToListAsync();
+
+        return Ok(new { tasks });
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetTaskById([FromRoute] int id)
+    {
+        var userId = GetUserId();
+        var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == id);
+
+        if (task == null)
+            return NotFound("Task not found or access denied");
+
+
+        return Ok(task);
+    }
+
+
+
 }

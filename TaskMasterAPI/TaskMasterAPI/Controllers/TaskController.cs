@@ -91,21 +91,63 @@ public class TaskController : ControllerBase
 
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTask([FromRoute] int id )
+    public async Task<IActionResult> DeleteTask([FromRoute] int id)
     {
         var userId = GetUserId();
 
-        if(userId == null)
+        if (userId == null)
         {
             return Unauthorized();
         }
 
         var task = await _context.TaskItems.FirstOrDefaultAsync(t => t.Id == id);
 
-         _context.TaskItems.Remove(task);
+        _context.TaskItems.Remove(task);
         await _context.SaveChangesAsync();
 
         return Ok("Task Deleted Successfully");
     }
+
+    [HttpGet("admin/all")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllTasksForAdmin()
+    {
+        var tasks = await _context.TaskItems.ToListAsync();
+        return Ok(tasks);
+    }
+
+
+    [HttpDelete("admin/delete/{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AdminDeleteTask(int id)
+    {
+        var task = await _context.TaskItems.FindAsync(id);
+
+        if (task == null)
+            return NotFound("Task not found");
+
+        _context.TaskItems.Remove(task);
+        await _context.SaveChangesAsync();
+
+        return Ok("Task deleted by admin");
+    }
+
+    [HttpPut("admin/update/{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AdminUpdateTask(int id, TaskCreateDto dto)
+    {
+        var task = await _context.TaskItems.FindAsync(id);
+
+        if (task == null)
+            return NotFound("Task not found");
+
+        task.Title = dto.Title;
+        task.Description = dto.Description;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(task);
+    }
+
 
 }
